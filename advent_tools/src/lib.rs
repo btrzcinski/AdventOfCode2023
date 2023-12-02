@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::{path::{Path, PathBuf}, time::Instant};
 
 use dialoguer::Select;
 
@@ -19,4 +19,15 @@ pub fn pick_data_file() -> PathBuf {
         .interact()
         .unwrap();
     choices.remove(selection)
+}
+
+pub fn report_runtime<F,R>(func: F) -> R 
+    where F: FnOnce() -> R
+{
+    let now = Instant::now();
+    let r = func();
+    let elapsed_time = now.elapsed();
+
+    println!("Running time: {:#?}", elapsed_time);
+    r
 }

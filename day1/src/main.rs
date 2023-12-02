@@ -1,12 +1,11 @@
-use std::{fs::File, io::Read};
+use std::{fs::File, io::Read, path::Path};
 
-use advent_tools::pick_data_file;
+use advent_tools::{report_runtime, pick_data_file};
 use regex::Regex;
 
-fn read_input_file() -> String {
-    let file_path = pick_data_file();
+fn read_input_file(file_path: &Path) -> String {
     let display = file_path.display();
-    let mut file = match File::open(file_path.as_path()) {
+    let mut file = match File::open(file_path) {
         Err(why) => panic!("Couldn't open {}: {}", display, why),
         Ok(file) => file,
     };
@@ -58,13 +57,18 @@ fn calibration_value(line: &str) -> u32 {
         .expect("Can't parse number from two digits in line")
 }
 
+fn get_calibration_value_sum(path: &Path) -> u32 {
+    read_input_file(path)
+    .lines()
+    .filter(|l| !l.is_empty())
+    .map(calibration_value)
+    .sum()
+}
+
 fn main() {
     env_logger::init();
 
-    let value_sum: u32 = read_input_file()
-        .lines()
-        .filter(|l| !l.is_empty())
-        .map(calibration_value)
-        .sum();
+    let file_path = pick_data_file();
+    let value_sum: u32 = report_runtime(|| get_calibration_value_sum(file_path.as_path()));
     println!("Sum: {value_sum}");
 }
