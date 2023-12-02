@@ -1,15 +1,12 @@
-use std::{env, fs::File, io::Read, path::Path};
+use std::{fs::File, io::Read};
 
+use data_loader::pick_data_file;
 use regex::Regex;
 
 fn read_input_file() -> String {
-    let file_name = env::args()
-        .skip(1)
-        .next()
-        .expect("Input file name required");
-    let path = Path::new(&file_name);
-    let display = path.display();
-    let mut file = match File::open(path) {
+    let file_path = pick_data_file();
+    let display = file_path.display();
+    let mut file = match File::open(file_path.as_path()) {
         Err(why) => panic!("Couldn't open {}: {}", display, why),
         Ok(file) => file,
     };
