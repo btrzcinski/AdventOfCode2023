@@ -9,4 +9,4 @@ edition = "2021"
 env_logger = "0.10.1"
 log = "0.4.20"
 regex = "1.10.2"
-data_loader = { path = "../data_loader" }
+advent_tools = { path = "../advent_tools" }

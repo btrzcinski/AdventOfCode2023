@@ -1,6 +1,6 @@
 use std::{fs::File, io::Read};
 
-use data_loader::pick_data_file;
+use advent_tools::pick_data_file;
 use regex::Regex;
 
 fn read_input_file() -> String {
