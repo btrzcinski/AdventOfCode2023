@@ -1,6 +1,20 @@
-use std::{path::{Path, PathBuf}, time::Instant};
+use std::{path::{Path, PathBuf}, fs::File, io::Read, time::Instant};
 
 use dialoguer::Select;
+
+pub fn read_input_file(file_path: &Path) -> String {
+    let display = file_path.display();
+    let mut file = match File::open(file_path) {
+        Err(why) => panic!("Couldn't open {}: {}", display, why),
+        Ok(file) => file,
+    };
+    let mut s = String::new();
+    match file.read_to_string(&mut s) {
+        Err(why) => panic!("Couldn't read {}: {}", display, why),
+        Ok(_) => (),
+    }
+    return s;
+}
 
 pub fn pick_data_file() -> PathBuf {
     let data_folder = Path::new("data");

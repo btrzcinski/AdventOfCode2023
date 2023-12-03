@@ -1,21 +1,7 @@
-use std::{fs::File, io::Read, path::Path};
+use std::path::Path;
 
-use advent_tools::{report_runtime, pick_data_file};
+use advent_tools::*;
 use regex::Regex;
-
-fn read_input_file(file_path: &Path) -> String {
-    let display = file_path.display();
-    let mut file = match File::open(file_path) {
-        Err(why) => panic!("Couldn't open {}: {}", display, why),
-        Ok(file) => file,
-    };
-    let mut s = String::new();
-    match file.read_to_string(&mut s) {
-        Err(why) => panic!("Couldn't read {}: {}", display, why),
-        Ok(_) => (),
-    }
-    return s;
-}
 
 fn extract_digit_from_prefix(line: &str) -> Option<char> {
     let re = Regex::new(r"^(?<digit>one|two|three|four|five|six|seven|eight|nine|\d)").unwrap();
