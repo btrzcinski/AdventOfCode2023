@@ -1,114 +1,10 @@
-use std::{
-    iter::Sum,
-    ops::{Add, Deref, DerefMut},
-    path::Path,
-    str::FromStr,
-};
+use std::{path::Path, str::FromStr};
 
+mod cube_set;
+
+use crate::cube_set::{CubeSet, Game};
 use advent_tools::*;
-use dialoguer::Input;
-
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
-struct CubeSet {
-    red: u8,
-    green: u8,
-    blue: u8,
-}
-
-impl CubeSet {
-    fn superset_of(&self, other: &CubeSet) -> bool {
-        self.red >= other.red && self.green >= other.green && self.blue >= other.blue
-    }
-}
-
-impl Add<&CubeSet> for CubeSet {
-    type Output = CubeSet;
-
-    fn add(self, other: &CubeSet) -> CubeSet {
-        CubeSet {
-            red: self.red + other.red,
-            green: self.green + other.green,
-            blue: self.blue + other.blue,
-        }
-    }
-}
-
-impl<'a> Sum<&'a CubeSet> for CubeSet {
-    fn sum<I: Iterator<Item = &'a CubeSet>>(iter: I) -> Self {
-        iter.fold(CubeSet::default(), CubeSet::add)
-    }
-}
-
-#[derive(Debug)]
-struct ParseCubeSetError;
-
-impl FromStr for CubeSet {
-    type Err = ParseCubeSetError;
-
-    // Expects a string like "5 blue, 4 red, 13 green".
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut out = CubeSet::default();
-        for p in s.split(", ") {
-            let (num_str, color) = p.split_once(" ").ok_or(ParseCubeSetError)?;
-            let num = u8::from_str(num_str).or(Err(ParseCubeSetError))?;
-            match color {
-                "red" => out.red = num,
-                "green" => out.green = num,
-                "blue" => out.blue = num,
-                _ => return Err(ParseCubeSetError),
-            }
-        }
-        Ok(out)
-    }
-}
-
-#[derive(Debug, Default)]
-struct Game {
-    number: u32,
-    cube_sets: Vec<CubeSet>,
-}
-
-impl Deref for Game {
-    type Target = Vec<CubeSet>;
-
-    fn deref(&self) -> &Vec<CubeSet> {
-        &self.cube_sets
-    }
-}
-
-impl DerefMut for Game {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.cube_sets
-    }
-}
-
-#[derive(Debug)]
-struct ParseGameError;
-
-impl FromStr for Game {
-    type Err = ParseGameError;
-
-    // Expects a string like "Game 5: 1 blue, 2 red; 3 green, 4 blue".
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (game_id, cube_sets) = s.split_once(": ").ok_or(ParseGameError)?;
-        let game_number = game_id
-            .strip_prefix("Game ")
-            .map(u32::from_str)
-            .and_then(Result::ok)
-            .ok_or(ParseGameError)?;
-        let mut out = Game {
-            number: game_number,
-            ..Default::default()
-        };
-
-        for set_str in cube_sets.split("; ") {
-            let set = CubeSet::from_str(set_str).or(Err(ParseGameError))?;
-            out.push(set)
-        }
-
-        Ok(out)
-    }
-}
+use dialoguer::{Input, Select};
 
 fn read_games_from_file(path: &Path) -> Vec<Game> {
     read_input_file(path)
@@ -141,12 +37,39 @@ fn ask_for_target_bag() -> CubeSet {
     CubeSet { red, green, blue }
 }
 
-fn main() {
-    let file_path = pick_data_file();
+fn possible_games(path: &Path) {
     let target_bag = ask_for_target_bag();
     let games = report_runtime(|| {
-        let games = read_games_from_file(file_path.as_path());
+        let games = read_games_from_file(path);
         sum_of_possible_games(&target_bag, &games)
     });
-    println!("Games: {:#?}", games);
+    println!("Sum of possible game IDs: {:#?}", games);
+}
+
+fn power_sum_of_minimum_possible_games(path: &Path) {
+    let power_sum = report_runtime(|| {
+        let games = read_games_from_file(path);
+        games
+            .iter()
+            .map(Game::minimum_set)
+            .map(CubeSet::power)
+            .sum::<u32>()
+    });
+    println!("Sum of powers of minimum possible cubes: {}", power_sum);
+}
+
+fn main() {
+    let file_path = pick_data_file();
+    match Select::new()
+        .with_prompt("Choose an exercise")
+        .item("Part 1: Sum of possible game IDs")
+        .item("Part 2: Sum of powers of minimum possible bags")
+        .interact_opt()
+        .unwrap()
+    {
+        Some(0) => possible_games(file_path.as_path()),
+        Some(1) => power_sum_of_minimum_possible_games(file_path.as_path()),
+        Some(_) => panic!("Out-of-bounds exercise choice"),
+        None => println!("You did not choose anything."),
+    }
 }
